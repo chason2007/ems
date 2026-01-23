@@ -21,6 +21,7 @@ router.post('/register', async (req, res) => {
             email: req.body.email,
             password: hashedPassword,
             role: req.body.role || 'Employee', // Default to Employee
+            position: req.body.position,
             salary: req.body.salary
         });
 

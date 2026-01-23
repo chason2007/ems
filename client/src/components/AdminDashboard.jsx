@@ -5,7 +5,34 @@ function AdminDashboard() {
     const [attendanceLogs, setAttendanceLogs] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [users, setUsers] = useState([]);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editForm, setEditForm] = useState({ name: '', email: '', role: 'Employee', position: '', salary: '' });
     const [leaves, setLeaves] = useState([]);
+
+    const handleEditClick = (user) => {
+        setEditingUser(user._id);
+        setEditForm({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            position: user.position || '',
+            salary: user.salary || ''
+        });
+    };
+
+    const handleUpdateUser = async () => {
+        try {
+            const token = localStorage.getItem('auth-token');
+            const res = await axios.put(`http://localhost:5001/api/admin/users/${editingUser}`, editForm, {
+                headers: { 'auth-token': token }
+            });
+            setUsers(users.map(u => u._id === editingUser ? res.data : u));
+            setEditingUser(null);
+            alert("User updated successfully");
+        } catch (err) {
+            alert("Failed to update user: " + (err.response?.data?.error || err.message));
+        }
+    };
 
     useEffect(() => {
         const fetchAdminData = async () => {
@@ -82,14 +109,70 @@ function AdminDashboard() {
                         <tbody>
                             {users.map(u => (
                                 <tr key={u._id}>
-                                    <td>{u.name}</td>
-                                    <td>{u.email}</td>
-                                    <td><span className={`badge ${u.role === 'Admin' ? 'badge-primary' : 'badge-warning'}`}>{u.role}</span></td>
-                                    <td>
-                                        {u.role !== 'Admin' && (
-                                            <button onClick={() => handleDeleteUser(u._id)} className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Delete</button>
-                                        )}
-                                    </td>
+                                    {editingUser === u._id ? (
+                                        // Edit Mode
+                                        <>
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.name}
+                                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                    style={{ width: '100%', padding: '0.4rem' }}
+                                                />
+                                            </td>
+                                            <td>
+                                                <input
+                                                    type="email"
+                                                    value={editForm.email}
+                                                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                                    style={{ width: '100%', padding: '0.4rem' }}
+                                                />
+                                            </td>
+                                            <td>
+                                                <div className="flex gap-2">
+                                                    <select
+                                                        value={editForm.role}
+                                                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                                                        style={{ padding: '0.4rem', borderRadius: '4px' }}
+                                                    >
+                                                        <option value="Employee">Employee</option>
+                                                        <option value="Admin">Admin</option>
+                                                    </select>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Position"
+                                                        value={editForm.position}
+                                                        onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
+                                                        style={{ width: '80px', padding: '0.4rem' }}
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="flex gap-2">
+                                                    <button type="button" onClick={handleUpdateUser} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Save</button>
+                                                    <button type="button" onClick={() => setEditingUser(null)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Cancel</button>
+                                                </div>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        // View Mode
+                                        <>
+                                            <td>
+                                                <div style={{ fontWeight: '500' }}>{u.name}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)' }}>{u.position || 'No Position'}</div>
+                                            </td>
+                                            <td>{u.email}</td>
+                                            <td><span className={`badge ${u.role === 'Admin' ? 'badge-primary' : 'badge-warning'}`}>{u.role}</span></td>
+                                            <td>
+                                                {u.role !== 'Admin' && (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => handleEditClick(u)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-primary)', borderColor: 'var(--pk-primary)' }}>Edit</button>
+                                                        <button onClick={() => handleDeleteUser(u._id)} className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Delete</button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </>
+                                    )}
                                 </tr>
                             ))}
                             {users.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found.</td></tr>}

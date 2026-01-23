@@ -64,9 +64,6 @@ function Login() {
                         Sign In
                     </button>
                 </form>
-                <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--pk-text-muted)', fontSize: '0.95rem' }}>
-                    Don't have an account? <Link to="/register" style={{ fontWeight: '600', color: 'var(--pk-primary)' }}>Create account</Link>
-                </p>
             </div>
         </div>
     );

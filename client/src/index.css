@@ -44,6 +44,16 @@
   }
 }
 
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .desktop-only {
+    display: block;
+  }
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;

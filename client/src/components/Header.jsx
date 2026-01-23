@@ -51,7 +51,10 @@ function Header() {
                             <Link to="/" style={{ fontWeight: '500', color: 'var(--pk-text-main)' }}>Dashboard</Link>
                             <Link to="/attendance" style={{ fontWeight: '500', color: 'var(--pk-text-main)' }}>Attendance</Link>
                             {user.role === 'Admin' && (
-                                <Link to="/settings" style={{ fontWeight: '500', color: 'var(--pk-text-main)' }}>Settings</Link>
+                                <>
+                                    <Link to="/add-user" style={{ fontWeight: '500', color: 'var(--pk-text-main)' }}>Add User</Link>
+                                    <Link to="/settings" style={{ fontWeight: '500', color: 'var(--pk-text-main)' }}>Settings</Link>
+                                </>
                             )}
                         </nav>
                     )}
@@ -61,7 +64,7 @@ function Header() {
                 <div>
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                            <div style={{ textAlign: 'right', display: 'none', '@media (min-width: 600px)': { display: 'block' } }}>
+                            <div className="desktop-only" style={{ textAlign: 'right' }}>
                                 <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{user.name}</div>
                                 <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)' }}>{user.role}</div>
                             </div>
@@ -71,8 +74,7 @@ function Header() {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            <Link to="/login" className="btn btn-ghost" style={{ textDecoration: 'none' }}>Login</Link>
-                            <Link to="/register" className="btn btn-primary" style={{ textDecoration: 'none' }}>Register</Link>
+                            <Link to="/login" className="btn btn-primary" style={{ textDecoration: 'none' }}>Login</Link>
                         </div>
                     )}
                 </div>
