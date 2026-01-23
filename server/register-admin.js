@@ -6,8 +6,8 @@
 async function registerAdmin() {
     const adminUser = {
         name: "Super Admin",
-        email: "admin@company.com", // Change this if needed
-        password: "adminpassword123", // Change this if needed
+        email: "admin@system.com",
+        password: "admin123",
         role: "Admin",
         salary: 120000
     };
