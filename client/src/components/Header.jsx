@@ -29,20 +29,16 @@ function Header() {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                            width: '32px',
-                            height: '32px',
-                            background: 'var(--pk-primary)',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontWeight: 'bold'
-                        }}>
-                            EP
-                        </div>
-                        <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--pk-text-main)' }}>Employee Portal</h2>
+                        <img
+                            src="/worksync-logo.png"
+                            alt="WorkSync Logo"
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                objectFit: 'contain'
+                            }}
+                        />
+                        <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--pk-text-main)' }}>WorkSync</h2>
                     </div>
 
                     {/* Navigation - Middle */}
