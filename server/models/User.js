@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema({
     role: { type: String, enum: ['Admin', 'Employee'], default: 'Employee' },
     position: String,
     salary: Number, // Basic fixed salary for payroll module
+    profileImage: String, // Filename of uploaded profile image
 });
 
 module.exports = mongoose.model('User', UserSchema);

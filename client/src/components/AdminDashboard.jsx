@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
 import ConfirmModal from './ConfirmModal';
+import Avatar from './Avatar';
 
 function AdminDashboard() {
     const [attendanceLogs, setAttendanceLogs] = useState([]);
@@ -12,6 +13,12 @@ function AdminDashboard() {
     const [editingUser, setEditingUser] = useState(null);
     const [editForm, setEditForm] = useState({ name: '', email: '', role: 'Employee', position: '' });
     const [leaves, setLeaves] = useState([]);
+    const [passwordResets, setPasswordResets] = useState([]);
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetUserId, setResetUserId] = useState(null);
+    const [resetUserName, setResetUserName] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [resetLoading, setResetLoading] = useState(false);
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
     const { showToast } = useToast();
 
@@ -72,6 +79,10 @@ function AdminDashboard() {
                 const leavesRes = await axios.get('http://localhost:5001/api/leaves', { headers: { 'auth-token': token } });
                 setLeaves(leavesRes.data);
 
+                // Fetch Password Reset Requests
+                const resetsRes = await axios.get('http://localhost:5001/api/admin/password-resets', { headers: { 'auth-token': token } });
+                setPasswordResets(resetsRes.data);
+
             } catch (err) {
                 console.error("Failed to fetch admin data", err);
                 showToast("Failed to load dashboard data", 'error');
@@ -117,6 +128,123 @@ function AdminDashboard() {
         } catch (err) {
             showToast("Failed to delete user", 'error');
         }
+    };
+
+    // Export attendance to CSV
+    const exportToCSV = () => {
+        if (attendanceLogs.length === 0) {
+            showToast("No attendance data to export", 'error');
+            return;
+        }
+
+        // Prepare CSV headers
+        const headers = ['Employee Name', 'Email', 'Date', 'Time', 'Status'];
+
+        // Prepare CSV rows
+        const rows = attendanceLogs.map(log => {
+            const date = new Date(log.date);
+            return [
+                log.userId?.name || 'Unknown',
+                log.userId?.email || 'N/A',
+                date.toLocaleDateString(),
+                date.toLocaleTimeString(),
+                log.status
+            ];
+        });
+
+        // Combine headers and rows
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `attendance_${selectedDate || 'all'}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast(`Exported ${attendanceLogs.length} attendance records`, 'success');
+    };
+
+    // Generate random password
+    const generatePassword = () => {
+        const length = 12;
+        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+        let password = '';
+        for (let i = 0; i < length; i++) {
+            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        setNewPassword(password);
+        showToast('Password generated!', 'success');
+    };
+
+    // Open reset password modal
+    const openResetModal = (userId, userName) => {
+        console.log('Opening reset modal for:', userId, userName);
+        setResetUserId(userId);
+        setResetUserName(userName);
+        setNewPassword('');
+        setShowResetModal(true);
+    };
+
+    // Reset user password
+    const handleResetPassword = async () => {
+        if (!newPassword) {
+            showToast('Please enter a new password', 'error');
+            return;
+        }
+
+        setResetLoading(true);
+        try {
+            const token = localStorage.getItem('auth-token');
+            await axios.put(
+                `http://localhost:5001/api/admin/users/${resetUserId}/reset-password`,
+                { newPassword },
+                { headers: { 'auth-token': token } }
+            );
+
+            showToast(`Password reset successfully for ${resetUserName}`, 'success');
+            setShowResetModal(false);
+            setNewPassword('');
+        } catch (err) {
+            console.error('Reset password error:', err);
+            showToast(err.response?.data?.error || 'Failed to reset password', 'error');
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
+    // Complete password reset request
+    const completeResetRequest = async (requestId, userId, userName) => {
+        openResetModal(userId, userName);
+        // Mark request as completed after password is reset
+        try {
+            const token = localStorage.getItem('auth-token');
+            await axios.post(
+                `http://localhost:5001/api/admin/password-resets/${requestId}/complete`,
+                {},
+                { headers: { 'auth-token': token } }
+            );
+            // Refresh password resets list
+            const resetsRes = await axios.get('http://localhost:5001/api/admin/password-resets', { headers: { 'auth-token': token } });
+            setPasswordResets(resetsRes.data);
+        } catch (err) {
+            console.error('Complete request error:', err);
+        }
+    };
+
+    // Copy password to clipboard
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(newPassword);
+        showToast('Password copied to clipboard!', 'success');
     };
 
     // Calculate stats
@@ -221,9 +349,7 @@ function AdminDashboard() {
                                         <>
                                             <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <div className="avatar avatar-sm">
-                                                        {u.name?.charAt(0)}
-                                                    </div>
+                                                    <Avatar user={u} size="sm" />
                                                     <div>
                                                         <div style={{ fontWeight: '500' }}>{u.name}</div>
                                                         <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)' }}>{u.position || 'No Position'}</div>
@@ -236,6 +362,13 @@ function AdminDashboard() {
                                                 {u.role !== 'Admin' && (
                                                     <div className="flex gap-2">
                                                         <button onClick={() => handleEditClick(u)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-primary)', borderColor: 'var(--pk-primary)' }}>Edit</button>
+                                                        <button
+                                                            onClick={() => openResetModal(u._id, u.name)}
+                                                            className="btn btn-ghost"
+                                                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-warning)', borderColor: 'var(--pk-warning)' }}
+                                                        >
+                                                            Reset Password
+                                                        </button>
                                                         <button
                                                             onClick={() => openModal(
                                                                 'Delete User',
@@ -279,9 +412,7 @@ function AdminDashboard() {
                                 <tr key={l._id}>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <div className="avatar avatar-sm">
-                                                {l.userId?.name?.charAt(0)}
-                                            </div>
+                                            <Avatar user={l.userId} size="sm" />
                                             {l.userId?.name}
                                         </div>
                                     </td>
@@ -308,11 +439,80 @@ function AdminDashboard() {
                 </div>
             </div>
 
+            {/* Password Reset Requests */}
+            <div className="card">
+                <div className="flex justify-between items-center mb-4">
+                    <h3>Password Reset Requests</h3>
+                    {passwordResets.filter(r => r.status === 'Pending').length > 0 && (
+                        <span className="badge badge-warning" style={{ fontSize: '0.9rem' }}>
+                            {passwordResets.filter(r => r.status === 'Pending').length} Pending
+                        </span>
+                    )}
+                </div>
+                <div className="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Email</th>
+                                <th>Request Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {passwordResets.map(request => (
+                                <tr key={request._id}>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Avatar user={request.userId} size="sm" />
+                                            {request.userId?.name || 'Unknown'}
+                                        </div>
+                                    </td>
+                                    <td>{request.email}</td>
+                                    <td>{new Date(request.requestDate).toLocaleString()}</td>
+                                    <td>
+                                        <span className={`badge ${request.status === 'Pending' ? 'badge-warning' : 'badge-success'}`}>
+                                            {request.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {request.status === 'Pending' && (
+                                            <button
+                                                onClick={() => completeResetRequest(request._id, request.userId._id, request.userId.name)}
+                                                className="btn btn-primary"
+                                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                            >
+                                                Reset Password
+                                            </button>
+                                        )}
+                                        {request.status === 'Completed' && (
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)' }}>
+                                                Completed {request.completedDate && `on ${new Date(request.completedDate).toLocaleDateString()}`}
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                            {passwordResets.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No password reset requests.</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             {/* Attendance Logs */}
             <div className="card">
                 <div className="flex justify-between items-center mb-4">
                     <h3>Attendance Logs</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                            onClick={exportToCSV}
+                            className="btn btn-primary"
+                            style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                            disabled={attendanceLogs.length === 0}
+                        >
+                            📥 Export to CSV
+                        </button>
                         <label>Filter Date:</label>
                         <input
                             type="date"
@@ -337,9 +537,7 @@ function AdminDashboard() {
                                 <tr key={log._id}>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <div className="avatar avatar-sm">
-                                                {log.userId?.name?.charAt(0) || '?'}
-                                            </div>
+                                            <Avatar user={log.userId} size="sm" />
                                             {log.userId?.name || 'Unknown'}
                                         </div>
                                     </td>
@@ -364,6 +562,85 @@ function AdminDashboard() {
                 message={modalConfig.message}
                 danger={true}
             />
+
+            {/* Reset Password Modal */}
+            {showResetModal && (
+                <>
+                    <div
+                        className="modal-backdrop"
+                        onClick={() => setShowResetModal(false)}
+                    />
+                    <div className="modal">
+                        <div className="modal-header">
+                            <h3>Reset Password for {resetUserName}</h3>
+                            <button
+                                className="modal-close"
+                                onClick={() => setShowResetModal(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ marginBottom: '1rem', color: 'var(--pk-text-muted)' }}>
+                                Enter a new password for this user. You can generate a random secure password or enter your own.
+                            </p>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                                    New Password
+                                </label>
+                                <div className="input-group">
+                                    <span className="input-icon">🔑</span>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter new password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        disabled={resetLoading}
+                                        style={{ paddingRight: '2.5rem' }}
+                                    />
+                                    {newPassword && (
+                                        <span
+                                            className="input-icon-right"
+                                            onClick={copyToClipboard}
+                                            title="Copy to clipboard"
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            📋
+                                        </span>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={generatePassword}
+                                    className="btn btn-ghost"
+                                    style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}
+                                    disabled={resetLoading}
+                                >
+                                    🎲 Generate Random Password
+                                </button>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button
+                                type="button"
+                                onClick={() => setShowResetModal(false)}
+                                className="btn btn-ghost"
+                                disabled={resetLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleResetPassword}
+                                className={`btn btn-primary ${resetLoading ? 'loading' : ''}`}
+                                disabled={resetLoading || !newPassword}
+                            >
+                                {resetLoading ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

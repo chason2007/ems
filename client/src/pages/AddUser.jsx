@@ -9,6 +9,8 @@ function AddUser() {
     const [role, setRole] = useState('Employee');
     const [position, setPosition] = useState('');
     const [loading, setLoading] = useState(false);
+    const [profileImage, setProfileImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const { showToast } = useToast();
 
     const generatePassword = () => {
@@ -36,6 +38,62 @@ function AddUser() {
         return 'strong';
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select an image file', 'error');
+                return;
+            }
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Image size must be less than 5MB', 'error');
+                return;
+            }
+            setProfileImage(file);
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const uploadProfileImage = async (userId) => {
+        if (!profileImage) {
+            console.log('No profile image to upload');
+            return;
+        }
+
+        console.log('Starting image upload for user:', userId);
+        const formData = new FormData();
+        formData.append('profileImage', profileImage);
+
+        try {
+            const token = localStorage.getItem('auth-token');
+            console.log('Auth token exists?', !!token);
+
+            const response = await axios.post(
+                `http://localhost:5001/api/admin/users/${userId}/upload-image`,
+                formData,
+                {
+                    headers: {
+                        'auth-token': token,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+            console.log('Image upload response:', response.data);
+            showToast('Profile image uploaded successfully!', 'success');
+        } catch (err) {
+            console.error('Image upload error:', err);
+            console.error('Error response:', err.response?.data);
+            showToast(err.response?.data?.error || 'User created but image upload failed', 'error');
+        }
+    };
+
     const passwordStrength = getPasswordStrength(password);
 
     const handleRegister = async (e) => {
@@ -43,13 +101,23 @@ function AddUser() {
         setLoading(true);
 
         try {
-            await axios.post('http://localhost:5001/api/auth/register', {
+            const res = await axios.post('http://localhost:5001/api/auth/register', {
                 name,
                 email,
                 password,
                 role,
                 position
             });
+
+            console.log('User created:', res.data);
+            console.log('Has profile image?', !!profileImage);
+            console.log('User ID:', res.data._id);
+
+            // Upload profile image if selected
+            if (profileImage && res.data._id) {
+                console.log('Uploading profile image for user:', res.data._id);
+                await uploadProfileImage(res.data._id);
+            }
 
             showToast(`User ${name} created successfully!`, 'success');
 
@@ -59,8 +127,10 @@ function AddUser() {
             setPassword('');
             setRole('Employee');
             setPosition('');
+            setProfileImage(null);
+            setImagePreview(null);
         } catch (err) {
-            console.error(err);
+            console.error('Registration error:', err);
             showToast(err.response?.data || 'Failed to create user', 'error');
         } finally {
             setLoading(false);
@@ -88,6 +158,63 @@ function AddUser() {
                                 required
                                 disabled={loading}
                             />
+                        </div>
+                    </div>
+
+                    {/* Profile Image */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                            Profile Image
+                        </label>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            {imagePreview && (
+                                <div style={{
+                                    width: '80px',
+                                    height: '80px',
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    border: '3px solid var(--pk-primary)'
+                                }}>
+                                    <img
+                                        src={imagePreview}
+                                        alt="Preview"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                </div>
+                            )}
+                            <div style={{ flex: 1 }}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    disabled={loading}
+                                    style={{ display: 'none' }}
+                                    id="profile-image-input"
+                                />
+                                <label
+                                    htmlFor="profile-image-input"
+                                    className="btn btn-ghost"
+                                    style={{ cursor: 'pointer', display: 'inline-block' }}
+                                >
+                                    📷 {imagePreview ? 'Change Image' : 'Upload Image'}
+                                </label>
+                                {imagePreview && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProfileImage(null);
+                                            setImagePreview(null);
+                                        }}
+                                        className="btn btn-ghost"
+                                        style={{ marginLeft: '0.5rem', color: 'var(--pk-danger)' }}
+                                    >
+                                        ✕ Remove
+                                    </button>
+                                )}
+                                <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', marginTop: '0.5rem' }}>
+                                    Max size: 5MB. Formats: JPG, PNG, GIF
+                                </div>
+                            </div>
                         </div>
                     </div>
 

@@ -9,6 +9,9 @@ function Login() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
     const { showToast } = useToast();
@@ -34,6 +37,29 @@ function Login() {
             showToast(err.response?.data || 'Login failed. Please check your credentials.', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        console.log('Forgot password submitted with email:', forgotEmail);
+        setForgotLoading(true);
+
+        try {
+            const res = await axios.post('http://localhost:5001/api/auth/forgot-password', {
+                email: forgotEmail
+            });
+
+            console.log('Forgot password response:', res.data);
+            showToast(res.data.message, 'success');
+            setShowForgotPassword(false);
+            setForgotEmail('');
+        } catch (err) {
+            console.error('Forgot password error:', err);
+            console.error('Error response:', err.response?.data);
+            showToast(err.response?.data?.error || 'Failed to submit password reset request', 'error');
+        } finally {
+            setForgotLoading(false);
         }
     };
 
@@ -140,15 +166,86 @@ function Login() {
                     </button>
                 </form>
 
-                <div style={{
-                    marginTop: '1.5rem',
-                    textAlign: 'center',
-                    fontSize: '0.9rem',
-                    color: 'var(--pk-text-muted)'
-                }}>
-                    <p>Secure login powered by WorkSync</p>
+                {/* Forgot Password Link */}
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--pk-primary)',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            textDecoration: 'underline'
+                        }}
+                    >
+                        Forgot Password?
+                    </button>
                 </div>
             </div>
+
+            {/* Forgot Password Modal */}
+            {showForgotPassword && (
+                <>
+                    <div
+                        className="modal-backdrop"
+                        onClick={() => setShowForgotPassword(false)}
+                    />
+                    <div className="modal">
+                        <div className="modal-header">
+                            <h3>Forgot Password</h3>
+                            <button
+                                className="modal-close"
+                                onClick={() => setShowForgotPassword(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <form onSubmit={handleForgotPassword}>
+                            <div className="modal-body">
+                                <p style={{ marginBottom: '1rem', color: 'var(--pk-text-muted)' }}>
+                                    Enter your email address and we'll notify an administrator to reset your password.
+                                </p>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                                        Email Address
+                                    </label>
+                                    <div className="input-group">
+                                        <span className="input-icon">📧</span>
+                                        <input
+                                            type="email"
+                                            placeholder="your.email@company.com"
+                                            value={forgotEmail}
+                                            onChange={(e) => setForgotEmail(e.target.value)}
+                                            required
+                                            disabled={forgotLoading}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForgotPassword(false)}
+                                    className="btn btn-ghost"
+                                    disabled={forgotLoading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className={`btn btn-primary ${forgotLoading ? 'loading' : ''}`}
+                                    disabled={forgotLoading}
+                                >
+                                    {forgotLoading ? 'Submitting...' : 'Submit Request'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

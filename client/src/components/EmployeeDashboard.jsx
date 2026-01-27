@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
+import Avatar from './Avatar';
 
 function EmployeeDashboard({ user }) {
     const [leaves, setLeaves] = useState([]);
@@ -77,9 +78,7 @@ function EmployeeDashboard({ user }) {
                 marginBottom: '2rem'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div className="avatar avatar-lg">
-                        {user?.name?.charAt(0)}
-                    </div>
+                    <Avatar user={user} size="lg" />
                     <div>
                         <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Welcome, {user?.name}!</h2>
                         <p style={{ opacity: 0.9, margin: 0 }}>Role: {user?.role} {user?.position && `• ${user.position}`}</p>

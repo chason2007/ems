@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import Avatar from './Avatar';
 
 function Header() {
     const { user, logout } = useAuth();
@@ -114,9 +115,7 @@ function Header() {
                                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--pk-bg)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
-                                    <div className="avatar avatar-sm">
-                                        {user.name?.charAt(0)}
-                                    </div>
+                                    <Avatar user={user} size="sm" />
                                     <div className="desktop-only" style={{ textAlign: 'left' }}>
                                         <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{user.name}</div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)' }}>{user.role}</div>
