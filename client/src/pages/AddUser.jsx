@@ -77,7 +77,7 @@ function AddUser() {
             console.log('Auth token exists?', !!token);
 
             const response = await axios.post(
-                `http://localhost:5001/api/admin/users/${userId}/upload-image`,
+                `https://worksync-nr6b.onrender.com/api/admin/users/${userId}/upload-image`,
                 formData,
                 {
                     headers: {
@@ -102,7 +102,7 @@ function AddUser() {
         setLoading(true);
 
         try {
-            const res = await axios.post('http://localhost:5001/api/auth/register', {
+            const res = await axios.post('https://worksync-nr6b.onrender.com/api/auth/register', {
                 name,
                 email,
                 password,

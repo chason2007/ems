@@ -61,7 +61,7 @@ function AdminDashboard() {
     const handleUpdateUser = async () => {
         try {
             const token = localStorage.getItem('auth-token');
-            const res = await axios.put(`http://localhost:5001/api/admin/users/${editingUser}`, editForm, {
+            const res = await axios.put(`https://worksync-nr6b.onrender.com/api/admin/users/${editingUser}`, editForm, {
                 headers: { 'auth-token': token }
             });
             setUsers(users.map(u => u._id === editingUser ? res.data : u));
@@ -74,7 +74,7 @@ function AdminDashboard() {
 
     const fetchAttendance = async () => {
         const token = localStorage.getItem('auth-token');
-        let attendanceUrl = 'http://localhost:5001/api/attendance';
+        let attendanceUrl = 'https://worksync-nr6b.onrender.com/api/attendance';
         if (selectedDate) {
             const [y, m, d] = selectedDate.split('-').map(Number);
             const start = new Date(y, m - 1, d, 0, 0, 0, 0);
@@ -97,7 +97,7 @@ function AdminDashboard() {
                 await fetchAttendance();
 
                 // Fetch Users
-                const usersRes = await axios.get('http://localhost:5001/api/admin/users', { headers: { 'auth-token': token } });
+                const usersRes = await axios.get('https://worksync-nr6b.onrender.com/api/admin/users', { headers: { 'auth-token': token } });
                 const visibleUsers = usersRes.data.filter(u => u.email !== 'admin@worksync.com');
                 const sortedUsers = visibleUsers.sort((a, b) => {
                     if (a.role === 'Admin' && b.role !== 'Admin') return -1;
@@ -108,11 +108,11 @@ function AdminDashboard() {
                 setFilteredUsers(sortedUsers);
 
                 // Fetch Leaves
-                const leavesRes = await axios.get('http://localhost:5001/api/leaves', { headers: { 'auth-token': token } });
+                const leavesRes = await axios.get('https://worksync-nr6b.onrender.com/api/leaves', { headers: { 'auth-token': token } });
                 setLeaves(leavesRes.data);
 
                 // Fetch Password Resets
-                const resetsRes = await axios.get('http://localhost:5001/api/admin/password-resets', { headers: { 'auth-token': token } });
+                const resetsRes = await axios.get('https://worksync-nr6b.onrender.com/api/admin/password-resets', { headers: { 'auth-token': token } });
                 setPasswordResets(resetsRes.data);
 
             } catch (err) {
@@ -144,7 +144,7 @@ function AdminDashboard() {
     const updateLeaveStatus = async (id, status) => {
         try {
             const token = localStorage.getItem('auth-token');
-            const res = await axios.put(`http://localhost:5001/api/leaves/${id}`, { status }, { headers: { 'auth-token': token } });
+            const res = await axios.put(`https://worksync-nr6b.onrender.com/api/leaves/${id}`, { status }, { headers: { 'auth-token': token } });
             setLeaves(leaves.map(l => l._id === id ? res.data : l));
             showToast(`Leave ${status.toLowerCase()} successfully`, 'success');
         } catch (err) {
@@ -155,7 +155,7 @@ function AdminDashboard() {
     const handleDeleteUser = async (id) => {
         try {
             const token = localStorage.getItem('auth-token');
-            await axios.delete(`http://localhost:5001/api/admin/users/${id}`, {
+            await axios.delete(`https://worksync-nr6b.onrender.com/api/admin/users/${id}`, {
                 headers: { 'auth-token': token }
             });
             setUsers(users.filter(u => u._id !== id));
@@ -249,7 +249,7 @@ function AdminDashboard() {
             const token = localStorage.getItem('auth-token');
             // 1. Reset Password
             await axios.put(
-                `http://localhost:5001/api/admin/users/${resetUserId}/reset-password`,
+                `https://worksync-nr6b.onrender.com/api/admin/users/${resetUserId}/reset-password`,
                 { newPassword },
                 { headers: { 'auth-token': token } }
             );
@@ -260,13 +260,13 @@ function AdminDashboard() {
             if (currentRequestId) {
                 console.log('Marking request as completed:', currentRequestId);
                 await axios.post(
-                    `http://localhost:5001/api/admin/password-resets/${currentRequestId}/complete`,
+                    `https://worksync-nr6b.onrender.com/api/admin/password-resets/${currentRequestId}/complete`,
                     {},
                     { headers: { 'auth-token': token } }
                 );
 
                 // Refresh password resets list
-                const resetsRes = await axios.get('http://localhost:5001/api/admin/password-resets', { headers: { 'auth-token': token } });
+                const resetsRes = await axios.get('https://worksync-nr6b.onrender.com/api/admin/password-resets', { headers: { 'auth-token': token } });
                 setPasswordResets(resetsRes.data);
                 setCurrentRequestId(null);
             }
@@ -309,7 +309,7 @@ function AdminDashboard() {
 
         try {
             const token = localStorage.getItem('auth-token');
-            await axios.put(`http://localhost:5001/api/attendance/${editingAttendance._id}`, {
+            await axios.put(`https://worksync-nr6b.onrender.com/api/attendance/${editingAttendance._id}`, {
                 status: editAttendanceStatus
             }, {
                 headers: { 'auth-token': token }
