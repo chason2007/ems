@@ -89,13 +89,15 @@ function Header() {
                             >
                                 Dashboard
                             </Link>
-                            <Link
-                                to="/attendance"
-                                className={`nav-link ${isActive('/attendance') ? 'active' : ''}`}
-                                style={{ fontWeight: '500', color: 'var(--pk-text-main)', textDecoration: 'none' }}
-                            >
-                                Attendance
-                            </Link>
+                            {user.role !== 'Admin' && (
+                                <Link
+                                    to="/attendance"
+                                    className={`nav-link ${isActive('/attendance') ? 'active' : ''}`}
+                                    style={{ fontWeight: '500', color: 'var(--pk-text-main)', textDecoration: 'none' }}
+                                >
+                                    Attendance
+                                </Link>
+                            )}
                             {user.role === 'Admin' && (
                                 <>
                                     <Link
@@ -206,9 +208,11 @@ function Header() {
                         <Link to="/" className="btn" onClick={() => setMobileMenuOpen(false)} style={{ justifyContent: 'flex-start', background: 'transparent', color: 'var(--pk-text-main)', border: 'none' }}>
                             📊 Dashboard
                         </Link>
-                        <Link to="/attendance" className="btn" onClick={() => setMobileMenuOpen(false)} style={{ justifyContent: 'flex-start', background: 'transparent', color: 'var(--pk-text-main)', border: 'none' }}>
-                            📅 Attendance
-                        </Link>
+                        {user.role !== 'Admin' && (
+                            <Link to="/attendance" className="btn" onClick={() => setMobileMenuOpen(false)} style={{ justifyContent: 'flex-start', background: 'transparent', color: 'var(--pk-text-main)', border: 'none' }}>
+                                📅 Attendance
+                            </Link>
+                        )}
                         {user.role === 'Admin' && (
                             <>
                                 <Link to="/add-user" className="btn" onClick={() => setMobileMenuOpen(false)} style={{ justifyContent: 'flex-start', background: 'transparent', color: 'var(--pk-text-main)', border: 'none' }}>
