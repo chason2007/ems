@@ -21,7 +21,7 @@ function Login() {
         setLoading(true);
 
         try {
-            const res = await axios.post('https://worksync-nr6b.onrender.com/api/auth/login', {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
                 email,
                 password
             });
@@ -46,7 +46,7 @@ function Login() {
         setForgotLoading(true);
 
         try {
-            const res = await axios.post('https://worksync-nr6b.onrender.com/api/auth/forgot-password', {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
                 email: forgotEmail
             });
 

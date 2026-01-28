@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
 
             if (token) {
                 try {
-                    const userRes = await axios.get('https://worksync-nr6b.onrender.com/api/auth/user', {
+                    const userRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/user`, {
                         headers: { 'auth-token': token }
                     });
                     setUser(userRes.data);

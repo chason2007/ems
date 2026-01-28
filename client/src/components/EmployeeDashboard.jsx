@@ -24,7 +24,7 @@ function EmployeeDashboard({ user }) {
         const token = localStorage.getItem('auth-token');
         try {
             // Fetch leaves
-            const leavesRes = await axios.get('https://worksync-nr6b.onrender.com/api/leaves', {
+            const leavesRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/leaves`, {
                 headers: { 'auth-token': token }
             });
             setLeaves(leavesRes.data);
@@ -32,7 +32,7 @@ function EmployeeDashboard({ user }) {
             // Fetch attendance
             if (user?._id || user?.id) {
                 const userId = user._id || user.id;
-                const attendanceRes = await axios.get(`https://worksync-nr6b.onrender.com/api/attendance/${userId}`);
+                const attendanceRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/attendance/${userId}`);
                 setAttendanceRecords(attendanceRes.data || []);
             }
         } catch (err) {
@@ -48,7 +48,7 @@ function EmployeeDashboard({ user }) {
 
         try {
             const token = localStorage.getItem('auth-token');
-            const res = await axios.post('https://worksync-nr6b.onrender.com/api/leaves', {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/leaves`, {
                 reason: leaveReason,
                 startDate: leaveStartDate,
                 endDate: leaveEndDate

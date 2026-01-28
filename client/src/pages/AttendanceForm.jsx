@@ -36,7 +36,7 @@ function AttendanceForm() {
         try {
             const token = localStorage.getItem('auth-token');
             const response = await axios.get(
-                `https://worksync-nr6b.onrender.com/api/attendance/today/${user.id}`,
+                `${import.meta.env.VITE_API_URL}/api/attendance/today/${user.id}`,
                 { headers: { 'auth-token': token } }
             );
 
@@ -53,7 +53,7 @@ function AttendanceForm() {
         if (!user || !user.id) return;
 
         try {
-            const response = await axios.get(`https://worksync-nr6b.onrender.com/api/attendance/user/${user.id}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/attendance/user/${user.id}`);
             const records = response.data || [];
             setAttendanceHistory(records.slice(0, 7)); // Last 7 days
         } catch (error) {
@@ -75,7 +75,7 @@ function AttendanceForm() {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth-token');
-            await axios.post('https://worksync-nr6b.onrender.com/api/attendance/mark', {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/attendance/mark`, {
                 userId: user.id,
                 status
             }, {
