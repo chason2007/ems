@@ -30,7 +30,8 @@ router.post('/', verify, async (req, res) => {
             endDate
         });
         const savedLeave = await newLeave.save();
-        res.status(201).json(savedLeave);
+        const populatedLeave = await Leave.findById(savedLeave._id).populate('userId', 'name email role profileImage');
+        res.status(201).json(populatedLeave);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
