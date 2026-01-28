@@ -20,7 +20,7 @@ function Avatar({ user, size = 'md', className = '' }) {
     };
 
     const imageUrl = user?.profileImage
-        ? `http://localhost:5001/uploads/profiles/${user.profileImage}`
+        ? `https://worksync-nr6b.onrender.com/uploads/profiles/${user.profileImage}`
         : null;
 
     return (

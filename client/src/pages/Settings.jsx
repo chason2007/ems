@@ -19,7 +19,7 @@ function Settings() {
     const handleDeleteUsers = async () => {
         try {
             const token = localStorage.getItem('auth-token');
-            const res = await axios.delete('http://localhost:5001/api/admin/users', {
+            const res = await axios.delete('https://worksync-nr6b.onrender.com/api/admin/users', {
                 headers: { 'auth-token': token }
             });
             showToast(res.data.message, 'success');
@@ -31,7 +31,7 @@ function Settings() {
     const handleDeleteAttendance = async () => {
         try {
             const token = localStorage.getItem('auth-token');
-            const res = await axios.delete('http://localhost:5001/api/admin/attendance', {
+            const res = await axios.delete('https://worksync-nr6b.onrender.com/api/admin/attendance', {
                 headers: { 'auth-token': token }
             });
             showToast(res.data.message, 'success');
@@ -43,7 +43,7 @@ function Settings() {
     const handleDeleteLeaves = async () => {
         try {
             const token = localStorage.getItem('auth-token');
-            const res = await axios.delete('http://localhost:5001/api/admin/leaves', {
+            const res = await axios.delete('https://worksync-nr6b.onrender.com/api/admin/leaves', {
                 headers: { 'auth-token': token }
             });
             showToast(res.data.message, 'success');
@@ -176,6 +176,17 @@ function Settings() {
                 cancelText="Cancel"
                 danger={true}
             />
+
+            <footer style={{
+                marginTop: '4rem',
+                textAlign: 'center',
+                color: 'var(--pk-text-muted)',
+                fontSize: '0.85rem',
+                padding: '1rem',
+                borderTop: '1px solid var(--pk-border)'
+            }}>
+                <p style={{ margin: 0 }}>Worksync - developed by Chason Hurtis</p>
+            </footer>
         </div>
     );
 }
