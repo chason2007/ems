@@ -1,6 +1,7 @@
 {
-  "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "jsonwebtoken": "^9.0.3"
+  "name": "employee-portal-root",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Please configure Vercel Root Directory to client/' && exit 0"
   }
 }

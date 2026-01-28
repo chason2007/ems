@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useToast } from '../context/ToastContext';
 import Avatar from './Avatar';
 import Skeleton from './Skeleton';
+import EmptyState from './EmptyState';
 
 function EmployeeDashboard({ user }) {
     const [pageLoading, setPageLoading] = useState(true);
@@ -220,7 +221,17 @@ function EmployeeDashboard({ user }) {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {leaves.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center' }}>No leave history found.</td></tr>}
+                                        {leaves.length === 0 && (
+                                            <tr>
+                                                <td colSpan="3">
+                                                    <EmptyState
+                                                        icon="📝"
+                                                        title="No Leave History"
+                                                        description="You haven't applied for any leaves yet."
+                                                    />
+                                                </td>
+                                            </tr>
+                                        )}
                                     </>
                                 )}
                             </tbody>

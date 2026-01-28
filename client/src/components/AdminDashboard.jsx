@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from './ConfirmModal';
 import Avatar from './Avatar';
 import Skeleton from './Skeleton';
+import EmptyState from './EmptyState';
 
 function AdminDashboard() {
     const { user: currentUser } = useAuth();
@@ -499,7 +500,17 @@ function AdminDashboard() {
                                             )}
                                         </tr>
                                     ))}
-                                    {filteredUsers.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found.</td></tr>}
+                                    {filteredUsers.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4">
+                                                <EmptyState
+                                                    icon="👥"
+                                                    title="No Users Found"
+                                                    description={searchTerm ? `No users match "${searchTerm}"` : "Get started by adding your first employee."}
+                                                />
+                                            </td>
+                                        </tr>
+                                    )}
                                 </>
                             )}
                         </tbody>
@@ -547,7 +558,17 @@ function AdminDashboard() {
                                     </td>
                                 </tr>
                             ))}
-                            {leaves.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No leave requests.</td></tr>}
+                            {leaves.length === 0 && (
+                                <tr>
+                                    <td colSpan="5">
+                                        <EmptyState
+                                            icon="🏖️"
+                                            title="No Leave Requests"
+                                            description="There are no pending leave requests at the moment."
+                                        />
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -608,7 +629,17 @@ function AdminDashboard() {
                                     </td>
                                 </tr>
                             ))}
-                            {passwordResets.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No password reset requests.</td></tr>}
+                            {passwordResets.length === 0 && (
+                                <tr>
+                                    <td colSpan="5">
+                                        <EmptyState
+                                            icon="🔐"
+                                            title="No Reset Requests"
+                                            description="No users have requested a password reset recently."
+                                        />
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -683,7 +714,17 @@ function AdminDashboard() {
                                     </td>
                                 </tr>
                             ))}
-                            {attendanceLogs.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No attendance records found for this date.</td></tr>}
+                            {attendanceLogs.length === 0 && (
+                                <tr>
+                                    <td colSpan="5">
+                                        <EmptyState
+                                            icon="📅"
+                                            title="No Attendance Found"
+                                            description={`We couldn't find any attendance records for ${new Date(selectedDate).toLocaleDateString()}.`}
+                                        />
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
