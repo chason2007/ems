@@ -771,6 +771,14 @@ select:focus {
   }
 }
 
-.success-checkmark {
-  animation: checkmark 0.5s ease-out;
+
+/* Skeleton Shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }

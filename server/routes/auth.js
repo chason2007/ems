@@ -19,7 +19,10 @@ router.get('/user', verify, async (req, res) => {
 // FORGOT PASSWORD (Create password reset request)
 router.post('/forgot-password', async (req, res) => {
     try {
-        const { email } = req.body;
+        let { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+
+        email = email.trim().toLowerCase();
 
         // Check if user exists
         const user = await User.findOne({ email });
@@ -59,8 +62,10 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/register', async (req, res) => {
     console.log("Register endpoint hit with body:", req.body);
     try {
+        const email = req.body.email.trim().toLowerCase();
+
         // 1. Check if user already exists
-        const emailExist = await User.findOne({ email: req.body.email });
+        const emailExist = await User.findOne({ email: email });
         if (emailExist) return res.status(400).send('Email already exists');
 
         // 2. Hash the password (encrypt it)
@@ -70,7 +75,7 @@ router.post('/register', async (req, res) => {
         // 3. Create a new user
         const user = new User({
             name: req.body.name,
-            email: req.body.email,
+            email: email,
             password: hashedPassword,
             role: req.body.role || 'Employee', // Default to Employee
             position: req.body.position,
@@ -89,8 +94,10 @@ router.post('/register', async (req, res) => {
 // LOGIN (Authenticate user)
 router.post('/login', async (req, res) => {
     try {
+        const email = req.body.email.trim().toLowerCase();
+
         // 1. Check if the email exists
-        const user = await User.findOne({ email: req.body.email });
+        const user = await User.findOne({ email: email });
         if (!user) return res.status(400).send('Email is wrong');
 
         // 2. Check if password is correct

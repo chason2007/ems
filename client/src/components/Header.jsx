@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
-import ThemeToggle from './ThemeToggle';
+
 
 function Header() {
     const { user, logout } = useAuth();
@@ -91,8 +91,7 @@ function Header() {
                 </div>
 
                 {/* Right Side - User / Auth Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <ThemeToggle />
+                <div>
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                             {/* Notification Bell (placeholder) */}
@@ -127,10 +126,7 @@ function Header() {
 
                                 {showDropdown && (
                                     <div className="dropdown-menu">
-                                        <div className="dropdown-item" style={{ pointerEvents: 'none', opacity: 0.7 }}>
-                                            <span>👤</span>
-                                            <span>Profile</span>
-                                        </div>
+
                                         {user.role === 'Admin' && (
                                             <Link to="/settings" className="dropdown-item" onClick={() => setShowDropdown(false)}>
                                                 <span>⚙️</span>

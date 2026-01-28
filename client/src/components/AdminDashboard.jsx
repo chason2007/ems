@@ -4,10 +4,12 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from './ConfirmModal';
 import Avatar from './Avatar';
+import Skeleton from './Skeleton';
 
 function AdminDashboard() {
     const { user: currentUser } = useAuth();
     const [attendanceLogs, setAttendanceLogs] = useState([]);
+    const [pageLoading, setPageLoading] = useState(true);
 
     // Initialize with LOCAL date string (YYYY-MM-DD)
     const [selectedDate, setSelectedDate] = useState(() => {
@@ -22,7 +24,7 @@ function AdminDashboard() {
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState(null);
-    const [editForm, setEditForm] = useState({ name: '', email: '', role: 'Employee', position: '' });
+    const [editForm, setEditForm] = useState({ name: '', email: '', role: 'Employee', position: '', employeeId: '' });
     const [leaves, setLeaves] = useState([]);
     const [passwordResets, setPasswordResets] = useState([]);
     const [showResetModal, setShowResetModal] = useState(false);
@@ -50,7 +52,8 @@ function AdminDashboard() {
             name: user.name,
             email: user.email,
             role: user.role,
-            position: user.position || ''
+            position: user.position || '',
+            employeeId: user.employeeId || ''
         });
     };
 
@@ -68,28 +71,33 @@ function AdminDashboard() {
         }
     };
 
+    const fetchAttendance = async () => {
+        const token = localStorage.getItem('auth-token');
+        let attendanceUrl = 'http://localhost:5001/api/attendance';
+        if (selectedDate) {
+            const [y, m, d] = selectedDate.split('-').map(Number);
+            const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+            const end = new Date(y, m - 1, d, 23, 59, 59, 999);
+            attendanceUrl += `?from=${start.toISOString()}&to=${end.toISOString()}`;
+        }
+        try {
+            const attendanceRes = await axios.get(attendanceUrl, { headers: { 'auth-token': token } });
+            setAttendanceLogs(attendanceRes.data);
+        } catch (err) {
+            console.error("Failed to fetch attendance", err);
+        }
+    };
+
     useEffect(() => {
         const fetchAdminData = async () => {
+            setPageLoading(true);
             const token = localStorage.getItem('auth-token');
             try {
-                // Fetch Attendance
-                let attendanceUrl = 'http://localhost:5001/api/attendance';
-                if (selectedDate) {
-                    // Create range for Local Day -> UTC
-                    const [y, m, d] = selectedDate.split('-').map(Number);
-                    const start = new Date(y, m - 1, d, 0, 0, 0, 0);
-                    const end = new Date(y, m - 1, d, 23, 59, 59, 999);
-                    attendanceUrl += `?from=${start.toISOString()}&to=${end.toISOString()}`;
-                }
-
-                const attendanceRes = await axios.get(attendanceUrl, { headers: { 'auth-token': token } });
-                setAttendanceLogs(attendanceRes.data);
+                await fetchAttendance();
 
                 // Fetch Users
                 const usersRes = await axios.get('http://localhost:5001/api/admin/users', { headers: { 'auth-token': token } });
-                // Filter out Super Admin from the list
                 const visibleUsers = usersRes.data.filter(u => u.email !== 'admin@worksync.com');
-
                 const sortedUsers = visibleUsers.sort((a, b) => {
                     if (a.role === 'Admin' && b.role !== 'Admin') return -1;
                     if (a.role !== 'Admin' && b.role === 'Admin') return 1;
@@ -102,13 +110,15 @@ function AdminDashboard() {
                 const leavesRes = await axios.get('http://localhost:5001/api/leaves', { headers: { 'auth-token': token } });
                 setLeaves(leavesRes.data);
 
-                // Fetch Password Reset Requests
+                // Fetch Password Resets
                 const resetsRes = await axios.get('http://localhost:5001/api/admin/password-resets', { headers: { 'auth-token': token } });
                 setPasswordResets(resetsRes.data);
 
             } catch (err) {
                 console.error("Failed to fetch admin data", err);
                 showToast("Failed to load dashboard data", 'error');
+            } finally {
+                setPageLoading(false);
             }
         };
 
@@ -121,7 +131,8 @@ function AdminDashboard() {
             const filtered = users.filter(u =>
                 u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (u.position && u.position.toLowerCase().includes(searchTerm.toLowerCase()))
+                (u.position && u.position.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (u.employeeId && u.employeeId.toLowerCase().includes(searchTerm.toLowerCase()))
             );
             setFilteredUsers(filtered);
         } else {
@@ -308,11 +319,7 @@ function AdminDashboard() {
             setEditingAttendance(null);
 
             // Refresh logs
-            const attendanceUrl = selectedDate
-                ? `http://localhost:5001/api/attendance?date=${selectedDate}`
-                : 'http://localhost:5001/api/attendance';
-            const attendanceRes = await axios.get(attendanceUrl, { headers: { 'auth-token': token } });
-            setAttendanceLogs(attendanceRes.data);
+            await fetchAttendance();
 
         } catch (err) {
             console.error('Update attendance error:', err);
@@ -336,18 +343,28 @@ function AdminDashboard() {
 
             {/* Overview Stats */}
             <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
-                    <h4>✓ Today's Attendance</h4>
-                    <p className="stat-value">{todayAttendance}</p>
-                </div>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
-                    <h4>⏳ Pending Leaves</h4>
-                    <p className="stat-value">{pendingLeaves}</p>
-                </div>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
-                    <h4>📊 Total Users</h4>
-                    <p className="stat-value">{users.length}</p>
-                </div>
+                {pageLoading ? (
+                    <>
+                        <Skeleton type="card" height="120px" />
+                        <Skeleton type="card" height="120px" />
+                        <Skeleton type="card" height="120px" />
+                    </>
+                ) : (
+                    <>
+                        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+                            <h4>✓ Today's Attendance</h4>
+                            <p className="stat-value">{todayAttendance}</p>
+                        </div>
+                        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                            <h4>⏳ Pending Leaves</h4>
+                            <p className="stat-value">{pendingLeaves}</p>
+                        </div>
+                        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
+                            <h4>📊 Total Users</h4>
+                            <p className="stat-value">{users.length}</p>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* User Management */}
@@ -378,87 +395,113 @@ function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredUsers.map(u => (
-                                <tr key={u._id}>
-                                    {editingUser === u._id ? (
-                                        <>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.name}
-                                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                                    style={{ width: '100%', padding: '0.4rem' }}
-                                                />
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="email"
-                                                    value={editForm.email}
-                                                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                                    style={{ width: '100%', padding: '0.4rem' }}
-                                                />
-                                            </td>
-                                            <td>
-                                                <select
-                                                    value={editForm.role}
-                                                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                                                    style={{ padding: '0.4rem', borderRadius: '4px' }}
-                                                >
-                                                    <option value="Employee">Employee</option>
-                                                    <option value="Admin">Admin</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <div className="flex gap-2">
-                                                    <button onClick={handleUpdateUser} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Save</button>
-                                                    <button onClick={() => setEditingUser(null)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Cancel</button>
-                                                </div>
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <Avatar user={u} size="sm" />
-                                                    <div>
-                                                        <div style={{ fontWeight: '500' }}>{u.name}</div>
-                                                        <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)' }}>{u.position || 'No Position'}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>{u.email}</td>
-                                            <td><span className={`badge ${u.role === 'Admin' ? 'badge-primary' : 'badge-warning'}`}>{u.role}</span></td>
-                                            <td>
-                                                {/* Show actions if user is Employee OR if current user is Super Admin covering an Admin */}
-                                                {(u.role !== 'Admin' || (currentUser && currentUser.email === 'admin@worksync.com')) && (
-                                                    <div className="flex gap-2">
-                                                        <button onClick={() => handleEditClick(u)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-primary)', borderColor: 'var(--pk-primary)' }}>Edit</button>
-                                                        <button
-                                                            onClick={() => openResetModal(u._id, u.name)}
-                                                            className="btn btn-ghost"
-                                                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-warning)', borderColor: 'var(--pk-warning)' }}
+                            {pageLoading ? (
+                                <>
+                                    <tr><td colSpan="4"><Skeleton /></td></tr>
+                                    <tr><td colSpan="4"><Skeleton /></td></tr>
+                                    <tr><td colSpan="4"><Skeleton /></td></tr>
+                                    <tr><td colSpan="4"><Skeleton /></td></tr>
+                                </>
+                            ) : (
+                                <>
+                                    {filteredUsers.map(u => (
+                                        <tr key={u._id}>
+                                            {editingUser === u._id ? (
+                                                <>
+                                                    <td>
+                                                        <div className="flex-col gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={editForm.name}
+                                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                                style={{ width: '100%', padding: '0.4rem', marginBottom: '4px' }}
+                                                                placeholder="Name"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={editForm.employeeId}
+                                                                onChange={(e) => setEditForm({ ...editForm, employeeId: e.target.value })}
+                                                                style={{ width: '100%', padding: '0.4rem', fontSize: '0.8rem' }}
+                                                                placeholder="ID (e.g. EMP001)"
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="email"
+                                                            value={editForm.email}
+                                                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                                            style={{ width: '100%', padding: '0.4rem' }}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <select
+                                                            value={editForm.role}
+                                                            onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                                                            style={{ padding: '0.4rem', borderRadius: '4px' }}
                                                         >
-                                                            Reset Password
-                                                        </button>
-                                                        <button
-                                                            onClick={() => openModal(
-                                                                'Delete User',
-                                                                `Are you sure you want to delete ${u.name}? This action cannot be undone.`,
-                                                                () => handleDeleteUser(u._id)
-                                                            )}
-                                                            className="btn btn-danger"
-                                                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            ))}
-                            {filteredUsers.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found.</td></tr>}
+                                                            <option value="Employee">Employee</option>
+                                                            <option value="Admin">Admin</option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={handleUpdateUser} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Save</button>
+                                                            <button onClick={() => setEditingUser(null)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Cancel</button>
+                                                        </div>
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                            <Avatar user={u} size="sm" />
+                                                            <div>
+                                                                <div style={{ fontSize: '0.75rem', color: 'var(--pk-text-muted)', marginBottom: '2px' }}>
+                                                                    {u.employeeId || 'No ID'}
+                                                                </div>
+                                                                <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '2px' }}>{u.name}</div>
+                                                                <div style={{ fontSize: '0.75rem', color: 'var(--pk-text-muted)' }}>
+                                                                    {u.position || 'No Pos'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{u.email}</td>
+                                                    <td><span className={`badge ${u.role === 'Admin' ? 'badge-primary' : 'badge-warning'}`}>{u.role}</span></td>
+                                                    <td>
+                                                        {/* Show actions if user is Employee OR if current user is Super Admin covering an Admin */}
+                                                        {(u.role !== 'Admin' || (currentUser && currentUser.email === 'admin@worksync.com')) && (
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => handleEditClick(u)} className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-primary)', borderColor: 'var(--pk-primary)' }}>Edit</button>
+                                                                <button
+                                                                    onClick={() => openResetModal(u._id, u.name)}
+                                                                    className="btn btn-ghost"
+                                                                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--pk-warning)', borderColor: 'var(--pk-warning)' }}
+                                                                >
+                                                                    Reset Password
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openModal(
+                                                                        'Delete User',
+                                                                        `Are you sure you want to delete ${u.name}? This action cannot be undone.`,
+                                                                        () => handleDeleteUser(u._id)
+                                                                    )}
+                                                                    className="btn btn-danger"
+                                                                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </>
+                                            )}
+                                        </tr>
+                                    ))}
+                                    {filteredUsers.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found.</td></tr>}
+                                </>
+                            )}
                         </tbody>
                     </table>
                 </div>

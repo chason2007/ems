@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
 import Avatar from './Avatar';
+import Skeleton from './Skeleton';
 
 function EmployeeDashboard({ user }) {
+    const [pageLoading, setPageLoading] = useState(true);
     const [leaves, setLeaves] = useState([]);
     const [leaveReason, setLeaveReason] = useState('');
     const [leaveStartDate, setLeaveStartDate] = useState('');
@@ -32,6 +34,8 @@ function EmployeeDashboard({ user }) {
             }
         } catch (err) {
             console.error("Failed to fetch data", err);
+        } finally {
+            setPageLoading(false);
         }
     };
 
@@ -93,22 +97,33 @@ function EmployeeDashboard({ user }) {
 
             {/* Stats Cards */}
             <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-                <div className="stat-card">
-                    <h4>📅 Pending Requests</h4>
-                    <p className="stat-value">{pendingLeaves}</p>
-                </div>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
-                    <h4>✓ Approved Leaves</h4>
-                    <p className="stat-value">{approvedLeaves}</p>
-                </div>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
-                    <h4>📊 This Month</h4>
-                    <p className="stat-value">{thisMonthAttendance} days</p>
-                </div>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
-                    <h4>🎯 Total Present</h4>
-                    <p className="stat-value">{presentDays}</p>
-                </div>
+                {pageLoading ? (
+                    <>
+                        <Skeleton type="card" height="120px" />
+                        <Skeleton type="card" height="120px" />
+                        <Skeleton type="card" height="120px" />
+                        <Skeleton type="card" height="120px" />
+                    </>
+                ) : (
+                    <>
+                        <div className="stat-card">
+                            <h4>📅 Pending Requests</h4>
+                            <p className="stat-value">{pendingLeaves}</p>
+                        </div>
+                        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+                            <h4>✓ Approved Leaves</h4>
+                            <p className="stat-value">{approvedLeaves}</p>
+                        </div>
+                        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                            <h4>📊 This Month</h4>
+                            <p className="stat-value">{thisMonthAttendance} days</p>
+                        </div>
+                        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
+                            <h4>🎯 Total Present</h4>
+                            <p className="stat-value">{presentDays}</p>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '2rem' }}>
@@ -183,18 +198,28 @@ function EmployeeDashboard({ user }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {leaves.map(l => (
-                                    <tr key={l._id}>
-                                        <td>{l.reason}</td>
-                                        <td>{new Date(l.startDate).toLocaleDateString()} - {new Date(l.endDate).toLocaleDateString()}</td>
-                                        <td>
-                                            <span className={`badge ${l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>
-                                                {l.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {leaves.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center' }}>No leave history found.</td></tr>}
+                                {pageLoading ? (
+                                    <>
+                                        <tr><td colSpan="3"><Skeleton /></td></tr>
+                                        <tr><td colSpan="3"><Skeleton /></td></tr>
+                                        <tr><td colSpan="3"><Skeleton /></td></tr>
+                                    </>
+                                ) : (
+                                    <>
+                                        {leaves.map(l => (
+                                            <tr key={l._id}>
+                                                <td>{l.reason}</td>
+                                                <td>{new Date(l.startDate).toLocaleDateString()} - {new Date(l.endDate).toLocaleDateString()}</td>
+                                                <td>
+                                                    <span className={`badge ${l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>
+                                                        {l.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {leaves.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center' }}>No leave history found.</td></tr>}
+                                    </>
+                                )}
                             </tbody>
                         </table>
                     </div>

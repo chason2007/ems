@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
 import ConfirmModal from '../components/ConfirmModal';
+import ThemeToggle from '../components/ThemeToggle';
 
 function Settings() {
     const { showToast } = useToast();
@@ -54,6 +55,22 @@ function Settings() {
     return (
         <div className="fade-in" style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
             <h1 className="mb-8">Admin Settings</h1>
+
+            {/* Appearance Settings */}
+            <div className="card mb-8">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    🎨 Appearance
+                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <div style={{ fontWeight: '500' }}>Theme Preference</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--pk-text-muted)' }}>
+                            Choose your preferred appearance mode.
+                        </div>
+                    </div>
+                    <ThemeToggle />
+                </div>
+            </div>
 
             <div className="card" style={{ borderColor: 'var(--pk-danger)' }}>
                 <h3 style={{ color: 'var(--pk-danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
